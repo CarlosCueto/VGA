@@ -71,6 +71,10 @@ entity yavga_papilio is
 --			WAVEFORM_MODE : integer := 0		-- Waveform mode controls the waveform that is displayed. 0 = no waveform, 1 = default waveform, 2 = random waveform
   );
   port (pp_clk   : in  std_logic;
+		  msg_l1 : in std_logic_vector(256*8 downto 0);
+		  msg_l2 : in std_logic_vector(256*8 downto 0);
+		  msg_l3 : in std_logic_vector(256*8 downto 0);
+		  msg_l4 : in std_logic_vector(256*8 downto 0);
         o_hsync : out std_logic;
         o_vsync : out std_logic;
         o_r     : out std_logic;
@@ -105,14 +109,14 @@ architecture Behavioral of yavga_papilio is
       );
   end component;
 
-	COMPONENT DCM32to50
-	PORT(
-		CLKIN_IN : IN std_logic;          
-		CLKFX_OUT : OUT std_logic;
-		CLKIN_IBUFG_OUT : OUT std_logic;
-		CLK0_OUT : OUT std_logic
-		);
-	END COMPONENT;
+--	COMPONENT DCM32to50
+--	PORT(
+--		CLKIN_IN : IN std_logic;          
+--		CLKFX_OUT : OUT std_logic;
+--		CLKIN_IBUFG_OUT : OUT std_logic;
+--		CLK0_OUT : OUT std_logic
+--		);
+--	END COMPONENT;
 
   signal s_hsync : std_logic;
   signal s_vsync : std_logic;
@@ -125,6 +129,9 @@ architecture Behavioral of yavga_papilio is
 
   signal s_vsync_count : std_logic_vector(7 downto 0) := (others => '0');
   signal s_vsync1      : std_logic;
+  
+  signal s_hsync_count : std_logic_vector(4 downto 0) := (others => '0');
+  signal s_hsync1      : std_logic;
 
   signal s_chr_addr : std_logic_vector(c_CHR_ADDR_BUS_W - 1 downto 0);  -- := (others => '0');
   signal s_chr_data : std_logic_vector(c_CHR_DATA_BUS_W - 1 downto 0);  -- := (others => '0');
@@ -139,6 +146,8 @@ architecture Behavioral of yavga_papilio is
 
   attribute U_SET                  : string;
   attribute U_SET of "u1_vga_ctrl" : label is "u1_vga_ctrl_uset";
+  
+ 
   
 begin
   o_hsync <= s_hsync;
@@ -191,44 +200,109 @@ GFText_Impl:if TEXT_MODE = 1 generate					--1 = Gadget Factory Text
 --    ...        ...               ...
 --   row_37 "10010100000" ... "10010111000"
   p_write_chars : process(i_clk)
+  
+	 variable msg_pos : integer range 0 to 256*8 := 256*8;
+	 variable msg_vsync : std_logic_vector(7 downto 0) := (others => '0');
+	 variable msg_addr_l1 : std_logic_vector(10 downto 0) := "00000101100";
+	 variable msg_addr_l2 : std_logic_vector(10 downto 0) := "00001101100";
+	 variable msg_addr_l3 : std_logic_vector(10 downto 0) := "00010101100";
+	 variable msg_addr_l4 : std_logic_vector(10 downto 0) := "00011101100";
+	 variable i : integer range 0 to 64 := 0;
+	 
   begin
     if rising_edge(i_clk) then
       if s_initialized = '0' then
-        case s_vsync_count(2 downto 0) is
-          when "000" =>                 -- write Gadg
-            s_chr_we   <= "1111";
-            s_chr_addr <= "00000101100";
-            s_chr_data <= x"47" & x"61" & x"64" & x"67";
-          when "001" =>                 -- write et F  
-            s_chr_we   <= "1111";
-            s_chr_addr <= "00000101101";
-            s_chr_data <= x"65" & x"74" & x"20" & x"46";
-          when "010" =>                 -- write acto
-            s_chr_we   <= "1111";
-            s_chr_addr <= "00000101110";
-            s_chr_data <= x"61" & x"63" & x"74" & x"6f";
-          when "011" =>                 -- write ry
-            s_chr_we   <= "1111";
-            s_chr_addr <= "00000101111";
-            s_chr_data <= x"72" & x"79" & x"00" & x"00";
---          when "100" =>  -- configure cursor XY2 and XY3 (overwrite RAM defaults)
---            s_chr_we      <= "1111";
---            s_chr_addr    <= c_CFG_CURS_XY2(c_CFG_CURS_XY2'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
---            --             ND   bgColor grid,cur   ND       curs_x          curs_y
---            s_chr_data    <= x"11111111";
---            --            |--------108-------|-------109-------|----110-----|--111--|
-          when "101" =>  -- write config grid and cursor color (overwrite RAM defaults)
-            s_chr_we      <= "1111";
-            s_chr_addr    <= c_CFG_BG_CUR_COLOR_ADDR(c_CFG_BG_CUR_COLOR_ADDR'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
-            --             ND   bgColor grid,cur   ND       curs_x          curs_y
-            s_chr_data    <= "00" & "000" & "101" & "000" & "00000000000" & "0000000000";
-            --            |--------108-------|-------109-------|----110-----|--111--|
-            s_initialized <= '1';
-          when others =>
-            s_chr_we   <= (others => '0');
-            s_chr_addr <= (others => '1');
-            s_chr_data <= x"00" & x"00" & x"00" & x"00";
-        end case;
+			while i < 64 loop
+				
+				if s_hsync_count = 0 then
+				
+					if s_vsync_count = msg_vsync then			                 
+							s_chr_we   <= "1111";
+							s_chr_addr <= msg_addr_l1;
+							s_chr_data <= msg_l1(msg_pos downto msg_pos-31);
+					elsif s_vsync_count = "00000101" then  -- write config grid and cursor color (overwrite RAM defaults)
+							s_chr_we      <= "1111";
+							s_chr_addr    <= c_CFG_BG_CUR_COLOR_ADDR(c_CFG_BG_CUR_COLOR_ADDR'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
+							--             ND   bgColor grid,cur   ND       curs_x          curs_y
+							s_chr_data    <= "00" & "000" & "101" & "000" & "00000000000" & "0000000000";
+							--            |--------108-------|-------109-------|----110-----|--111--|
+							s_initialized <= '1';
+					else
+							s_chr_we   <= (others => '0');
+							s_chr_addr <= (others => '1');
+							s_chr_data <= x"00" & x"00" & x"00" & x"00";
+					end if;
+				end if;
+				
+				if s_hsync_count = 1 then
+				
+					if s_vsync_count = msg_vsync then                
+							s_chr_we   <= "1111";
+							s_chr_addr <= msg_addr_l2;
+							s_chr_data <= msg_l2(msg_pos downto msg_pos-31);
+					elsif s_vsync_count = "00000101" then  -- write config grid and cursor color (overwrite RAM defaults)
+							s_chr_we      <= "1111";
+							s_chr_addr    <= c_CFG_BG_CUR_COLOR_ADDR(c_CFG_BG_CUR_COLOR_ADDR'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
+							--             ND   bgColor grid,cur   ND       curs_x          curs_y
+							s_chr_data    <= "00" & "000" & "101" & "000" & "00000000000" & "0000000000";
+							--            |--------108-------|-------109-------|----110-----|--111--|
+							s_initialized <= '1';
+					else
+							s_chr_we   <= (others => '0');
+							s_chr_addr <= (others => '1');
+							s_chr_data <= x"00" & x"00" & x"00" & x"00";
+					end if;
+				end if;
+				
+				if s_hsync_count = 2 then
+				
+					if s_vsync_count = msg_vsync then                
+							s_chr_we   <= "1111";
+							s_chr_addr <= msg_addr_l3;
+							s_chr_data <= msg_l3(msg_pos downto msg_pos-31);
+					elsif s_vsync_count = "00000101" then  -- write config grid and cursor color (overwrite RAM defaults)
+							s_chr_we      <= "1111";
+							s_chr_addr    <= c_CFG_BG_CUR_COLOR_ADDR(c_CFG_BG_CUR_COLOR_ADDR'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
+							--             ND   bgColor grid,cur   ND       curs_x          curs_y
+							s_chr_data    <= "00" & "000" & "101" & "000" & "00000000000" & "0000000000";
+							--            |--------108-------|-------109-------|----110-----|--111--|
+							s_initialized <= '1';
+					else
+							s_chr_we   <= (others => '0');
+							s_chr_addr <= (others => '1');
+							s_chr_data <= x"00" & x"00" & x"00" & x"00";
+					end if;
+				end if;
+				
+				if s_hsync_count = 3 then
+				
+					if s_vsync_count = msg_vsync then                
+							s_chr_we   <= "1111";
+							s_chr_addr <= msg_addr_l4;
+							s_chr_data <= msg_l4(msg_pos downto msg_pos-31);
+					elsif s_vsync_count = "00000101" then  -- write config grid and cursor color (overwrite RAM defaults)
+							s_chr_we      <= "1111";
+							s_chr_addr    <= c_CFG_BG_CUR_COLOR_ADDR(c_CFG_BG_CUR_COLOR_ADDR'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
+							--             ND   bgColor grid,cur   ND       curs_x          curs_y
+							s_chr_data    <= "00" & "000" & "101" & "000" & "00000000000" & "0000000000";
+							--            |--------108-------|-------109-------|----110-----|--111--|
+							s_initialized <= '1';
+					else
+							s_chr_we   <= (others => '0');
+							s_chr_addr <= (others => '1');
+							s_chr_data <= x"00" & x"00" & x"00" & x"00";
+					end if;
+				end if;
+				
+				msg_addr_l1 := msg_addr_l1 + 1;
+				msg_addr_l2 := msg_addr_l2 + 1;
+				msg_addr_l3 := msg_addr_l3 + 1;
+				msg_addr_l4 := msg_addr_l4 + 1;
+				msg_pos := msg_pos - 32;
+				msg_vsync := msg_vsync + 1;
+				i := i + 1;
+		  	
+			end loop;									  
       else
         s_chr_we <= (others => '0');
       end if;
@@ -330,8 +404,53 @@ end generate;
       end if;
     end if;
   end process;
+  
+  p_hsync_count : process(i_clk)
+  begin
+    if rising_edge(i_clk) then
+      s_hsync1 <= s_hsync;
+      if (not s_hsync and s_hsync1) = '1' then  -- pulse on hsync falling
+        s_hsync_count <= s_hsync_count + 1;
+      end if;
+    end if;
+  end process;
 
 
 
 end Behavioral;
 
+
+--												  case s_vsync_count(2 downto 0) is
+--													 when "000" =>                 -- write Gadg
+--														s_chr_we   <= "1111";
+--														s_chr_addr <= "00000101100";
+--														s_chr_data <= x"47" & x"61" & x"64" & x"67";
+--													 when "001" =>                 -- write et F  
+--														s_chr_we   <= "1111";
+--														s_chr_addr <= "00000101101";
+--														s_chr_data <= x"65" & x"74" & x"20" & x"46";
+--													 when "010" =>                 -- write acto
+--														s_chr_we   <= "1111";
+--														s_chr_addr <= "00000101110";
+--														s_chr_data <= x"61" & x"63" & x"74" & x"6f";
+--													 when "011" =>                 -- write ry
+--														s_chr_we   <= "1111";
+--														s_chr_addr <= "00000101111";
+--														s_chr_data <= x"72" & x"79" & x"00" & x"00";
+--										--          when "100" =>  -- configure cursor XY2 and XY3 (overwrite RAM defaults)
+--										--            s_chr_we      <= "1111";
+--										--            s_chr_addr    <= c_CFG_CURS_XY2(c_CFG_CURS_XY2'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
+--										--            --             ND   bgColor grid,cur   ND       curs_x          curs_y
+--										--            s_chr_data    <= x"11111111";
+--										--            --            |--------108-------|-------109-------|----110-----|--111--|
+--													 when "101" =>  -- write config grid and cursor color (overwrite RAM defaults)
+--														s_chr_we      <= "1111";
+--														s_chr_addr    <= c_CFG_BG_CUR_COLOR_ADDR(c_CFG_BG_CUR_COLOR_ADDR'left downto 2);  -- c_CFG_BG_CUR_COLOR_ADDR >> 2
+--														--             ND   bgColor grid,cur   ND       curs_x          curs_y
+--														s_chr_data    <= "00" & "000" & "101" & "000" & "00000000000" & "0000000000";
+--														--            |--------108-------|-------109-------|----110-----|--111--|
+--														s_initialized <= '1';
+--													 when others =>
+--														s_chr_we   <= (others => '0');
+--														s_chr_addr <= (others => '1');
+--														s_chr_data <= x"00" & x"00" & x"00" & x"00";
