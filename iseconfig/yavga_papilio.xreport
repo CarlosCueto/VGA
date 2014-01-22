@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <report-views version="2.0" >
  <header>
-  <DateModified>2011-01-31T11:52:15</DateModified>
+  <DateModified>2014-01-22T02:18:05</DateModified>
   <ModuleName>yavga_papilio</ModuleName>
   <SummaryTimeStamp>2011-01-31T11:51:33</SummaryTimeStamp>
-  <SavedFilePath>C:/dbdev/My Dropbox/GadgetFactory/Shared/Wings/BPW5017-VGA_Wing/yavga_latest/yavga/trunk/vhdl/yavga/iseconfig/yavga_papilio.xreport</SavedFilePath>
-  <ImplementationReportsDirectory>C:/dbdev/My Dropbox/GadgetFactory/Shared/Wings/BPW5017-VGA_Wing/yavga_latest/yavga/trunk/vhdl/yavga\</ImplementationReportsDirectory>
+  <SavedFilePath>/home/maxwell/GitHub/VGA/iseconfig/yavga_papilio.xreport</SavedFilePath>
+  <ImplementationReportsDirectory>/home/maxwell/GitHub/VGA/</ImplementationReportsDirectory>
   <DateInitialized>2011-01-31T00:18:29</DateInitialized>
   <EnableMessageFiltering>false</EnableMessageFiltering>
  </header>

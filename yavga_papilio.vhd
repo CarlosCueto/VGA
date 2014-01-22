@@ -68,7 +68,7 @@ use work.yavga_pkg.all;
 entity yavga_papilio is
   Generic(											-- TEXT_MODE sets the type of text characters that are generated. Change the integer to control what text character mode to use.
 			TEXT_MODE : integer := 1			-- 0 = no generated text characters, 1 = Gadget Factory Text, 2 = Random Characters, 3 = Default mode that came with original yavga source code.
---			WAVEFORM_MODE : integer := 1		-- Waveform mode controls the waveform that is displayed. 0 = no waveform, 1 = default waveform, 2 = random waveform
+--			WAVEFORM_MODE : integer := 0		-- Waveform mode controls the waveform that is displayed. 0 = no waveform, 1 = default waveform, 2 = random waveform
   );
   port (pp_clk   : in  std_logic;
         o_hsync : out std_logic;
@@ -147,12 +147,14 @@ begin
   o_g     <= s_g;
   o_b     <= s_b;
   
-	Inst_DCM32to50: DCM32to50 PORT MAP(
-		CLKIN_IN => pp_clk,
-		CLKFX_OUT => i_clk,
-		CLKIN_IBUFG_OUT => open,
-		CLK0_OUT => open
-	);  
+--	Inst_DCM32to50: DCM32to50 PORT MAP(
+--		CLKIN_IN => pp_clk,
+--		CLKFX_OUT => i_clk,
+--		CLKIN_IBUFG_OUT => open,
+--		CLK0_OUT => open
+--	); 
+
+		i_clk <= pp_clk;
   
   u1_vga_ctrl : vga_ctrl port map(
     i_clk       => i_clk,

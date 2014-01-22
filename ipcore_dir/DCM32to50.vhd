@@ -1,17 +1,17 @@
 --------------------------------------------------------------------------------
--- Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
+-- Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
 --------------------------------------------------------------------------------
 --   ____  ____ 
 --  /   /\/   / 
 -- /___/  \  /    Vendor: Xilinx 
--- \   \   \/     Version : 12.2
+-- \   \   \/     Version : 14.6
 --  \   \         Application : xaw2vhdl
 --  /   /         Filename : DCM32to50.vhd
--- /___/   /\     Timestamp : 01/30/2011 19:07:10
+-- /___/   /\     Timestamp : 01/21/2014 12:21:43
 -- \   \  /  \ 
 --  \___\/\___\ 
 --
---Command: xaw2vhdl-st C:\\dbdev\My Dropbox\GadgetFactory\Shared\Wings\BPW5017-VGA_Wing\yavga_latest\yavga\trunk\vhdl\yavga\ipcore_dir\.\DCM32to50.xaw C:\\dbdev\My Dropbox\GadgetFactory\Shared\Wings\BPW5017-VGA_Wing\yavga_latest\yavga\trunk\vhdl\yavga\ipcore_dir\.\DCM32to50
+--Command: xaw2vhdl-st /home/maxwell/GitHub/VGA/ipcore_dir/DCM32to50.xaw /home/maxwell/GitHub/VGA/ipcore_dir/DCM32to50
 --Design Name: DCM32to50
 --Device: xc3s500e-4vq100
 --
